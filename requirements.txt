@@ -1,5 +1,6 @@
 fastapi
 uvicorn
+pypdf
 pymupdf
 langchain
 langchain-community
@@ -9,4 +10,4 @@ faiss-cpu
 python-multipart
 pydantic
 python-dotenv
-pypdf
+httpx
