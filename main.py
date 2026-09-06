@@ -10,13 +10,12 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_community.vectorstores import FAISS
 
-# Load API key from your existing .env file
 load_dotenv()
 
 app = FastAPI(title="AI Professor Telegram RAG", version="1.0.0")
 
+INDEX_DIR = "faiss_data"
 DEFAULT_INDEX = "." if os.path.exists("index.faiss") else "faiss_index"
-DEFAULT_INDEX = "faiss_index"  # Uses the database created by your build_db.py
 os.makedirs(INDEX_DIR, exist_ok=True)
 
 embeddings = OpenAIEmbeddings()
@@ -27,30 +26,31 @@ class QueryPayload(BaseModel):
     question: str
 
 
-# 1. DOCUMENT INGESTION (Matches build_db.py logic)
+@app.get("/")
+def read_root():
+    return {"status": "AI Professor Backend is Running"}
+
+
 @app.post("/upload")
 async def upload_pdf(user_id: str = Form(...), file: UploadFile = File(...)):
     try:
-        # Save temp file to load with PyPDFLoader
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
             tmp.write(await file.read())
             tmp_path = tmp.name
 
         loader = PyPDFLoader(tmp_path)
         documents = loader.load()
-        os.remove(tmp_path)  # Cleanup temp file
+        os.remove(tmp_path)
 
         if not documents:
             raise HTTPException(status_code=400, detail="No readable text found in PDF.")
 
-        # Same chunking as your build_db.py
         splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,
             chunk_overlap=200
         )
         chunks = splitter.split_documents(documents)
 
-        # Store in user-specific index folder
         user_index_path = os.path.join(INDEX_DIR, user_id)
         if os.path.exists(user_index_path):
             db = FAISS.load_local(user_index_path, embeddings, allow_dangerous_deserialization=True)
@@ -65,12 +65,10 @@ async def upload_pdf(user_id: str = Form(...), file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# 2. CHATBOT QUERY (Matches chatbot.py logic & prompt)
 @app.post("/chat")
 async def chat(payload: QueryPayload):
     user_index_path = os.path.join(INDEX_DIR, payload.user_id)
 
-    # Use the student's uploaded PDF index if exists; otherwise use your existing faiss_index
     if os.path.exists(user_index_path):
         db = FAISS.load_local(user_index_path, embeddings, allow_dangerous_deserialization=True)
     elif os.path.exists(DEFAULT_INDEX):
