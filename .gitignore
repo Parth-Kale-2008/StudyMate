@@ -1,0 +1,7 @@
+# Keep your secret OpenAI API key safe!
+.env
+
+# Python cache & dynamic student upload folders
+__pycache__/
+faiss_data/
+*.pyc
