@@ -15,7 +15,7 @@ load_dotenv()
 
 app = FastAPI(title="AI Professor Telegram RAG", version="1.0.0")
 
-INDEX_DIR = "faiss_data"
+DEFAULT_INDEX = "." if os.path.exists("index.faiss") else "faiss_index"
 DEFAULT_INDEX = "faiss_index"  # Uses the database created by your build_db.py
 os.makedirs(INDEX_DIR, exist_ok=True)
 
