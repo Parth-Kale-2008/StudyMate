@@ -18,7 +18,8 @@ INDEX_DIR = "faiss_data"
 DEFAULT_INDEX = "." if os.path.exists("index.faiss") else "faiss_index"
 os.makedirs(INDEX_DIR, exist_ok=True)
 
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+raw_token = os.getenv("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_BOT_TOKEN = raw_token.strip().replace("\n", "").replace("\r", "")
 embeddings = OpenAIEmbeddings()
 llm = ChatOpenAI(temperature=0)
 
