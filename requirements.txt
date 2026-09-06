@@ -9,3 +9,4 @@ faiss-cpu
 python-multipart
 pydantic
 python-dotenv
+pypdf
